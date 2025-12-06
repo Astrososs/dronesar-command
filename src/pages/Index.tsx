@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { Plane, Shield } from 'lucide-react';
+import { Heart, Shield } from 'lucide-react';
 import { useMissionState } from '@/hooks/useMissionState';
 import { VideoFeedPanel } from '@/components/VideoFeedPanel';
 import { TacticalMap } from '@/components/TacticalMap';
@@ -103,29 +103,29 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>SAR Command & Control | Drone Operations Dashboard</title>
+        <title>Rescue Command Center | Emergency Response Dashboard</title>
         <meta
           name="description"
-          content="Command & Control Dashboard for Search and Rescue Drone Operations. Real-time mission coordination and AI-powered detection system."
+          content="Command Center for Emergency Response Drone Operations. Real-time mission coordination for humanitarian rescue teams and fire services."
         />
       </Helmet>
 
-      <div className="min-h-screen bg-background flex flex-col scanlines">
+      <div className="min-h-screen bg-background flex flex-col">
         {/* Header */}
-        <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="px-4 py-3">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/20 rounded-sm border border-primary/40">
-                  <Plane className="w-5 h-5 text-primary" />
+                <div className="flex items-center justify-center w-10 h-10 bg-primary/20 rounded-md border border-primary/40">
+                  <Heart className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-display font-bold text-primary text-glow-primary tracking-wide">
-                    SAR COMMAND
+                  <h1 className="text-lg font-display font-bold text-primary tracking-wide">
+                    RESCUE COMMAND
                   </h1>
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <Shield className="w-3 h-3" />
-                    Drone Operations Center
+                    Emergency Response Center
                   </p>
                 </div>
               </div>
