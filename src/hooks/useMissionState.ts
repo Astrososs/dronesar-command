@@ -21,6 +21,7 @@ export interface MissionState {
   vssProcessingStatus: VssProcessingStatus;
   vssError: string | null;
   useVssAnalysis: boolean;
+  vssSummary: string | null;
 }
 
 export interface MissionStats {
@@ -47,6 +48,7 @@ export const useMissionState = () => {
     vssProcessingStatus: 'idle',
     vssError: null,
     useVssAnalysis: true, // Enable VSS by default
+    vssSummary: null,
   });
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -258,6 +260,11 @@ export const useMissionState = () => {
     }));
   }, []);
 
+  // Set VSS summary
+  const setVssSummary = useCallback((summary: string) => {
+    setState(prev => ({ ...prev, vssSummary: summary }));
+  }, []);
+
   const resetMission = useCallback(() => {
     if (state.videoUrl) {
       URL.revokeObjectURL(state.videoUrl);
@@ -281,6 +288,7 @@ export const useMissionState = () => {
       vssProcessingStatus: 'idle',
       vssError: null,
       useVssAnalysis: true,
+      vssSummary: null,
     });
     lastCheckedTime.current = 0;
   }, [state.videoUrl]);
@@ -325,5 +333,6 @@ export const useMissionState = () => {
     getStats,
     toggleVssAnalysis,
     addVssEvent,
+    setVssSummary,
   };
 };

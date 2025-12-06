@@ -20,16 +20,24 @@ interface VideoFeedPanelProps {
   vssProcessingStatus?: VssProcessingStatus;
   vssError?: string | null;
   vssFileId?: string | null;
+  isAnalyzing?: boolean;
 }
 
 const ProcessingStatusBadge = ({ 
   status, 
-  error 
+  error,
+  isAnalyzing,
 }: { 
   status: VssProcessingStatus; 
   error?: string | null;
+  isAnalyzing?: boolean;
 }) => {
   const getStatusConfig = () => {
+    // Show analyzing state when VLM analysis is running
+    if (isAnalyzing) {
+      return { icon: Loader2, text: 'Analyzing Video...', className: 'text-primary', animate: true };
+    }
+    
     switch (status) {
       case 'uploading':
         return { icon: Loader2, text: 'Uploading to VSS...', className: 'text-warning', animate: true };
@@ -70,6 +78,7 @@ export const VideoFeedPanel = ({
   vssProcessingStatus = 'idle',
   vssError,
   vssFileId,
+  isAnalyzing = false,
 }: VideoFeedPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -108,8 +117,12 @@ export const VideoFeedPanel = ({
         </div>
         <div className="flex items-center gap-3">
           {/* VSS Processing Status */}
-          {vssProcessingStatus !== 'idle' && (
-            <ProcessingStatusBadge status={vssProcessingStatus} error={vssError} />
+          {(vssProcessingStatus !== 'idle' || isAnalyzing) && (
+            <ProcessingStatusBadge 
+              status={vssProcessingStatus} 
+              error={vssError} 
+              isAnalyzing={isAnalyzing}
+            />
           )}
           
           {videoUrl && (

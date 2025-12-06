@@ -1,7 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Heart, Shield, Brain } from 'lucide-react';
 import { useMissionState } from '@/hooks/useMissionState';
-import { useVssAlerts } from '@/hooks/useVssAlerts';
+import { useVssDetections } from '@/hooks/useVssDetections';
 import { VideoFeedPanel } from '@/components/VideoFeedPanel';
 import { TacticalMap } from '@/components/TacticalMap';
 import { MissionLog } from '@/components/MissionLog';
@@ -13,6 +14,7 @@ import { VssStatus } from '@/components/VssStatus';
 import { ChatPanel } from '@/components/ChatPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const Index = () => {
   const {
@@ -29,14 +31,52 @@ const Index = () => {
     getStats,
     toggleVssAnalysis,
     addVssEvent,
+    setVssSummary,
   } = useMissionState();
 
-  // Connect VSS alerts when we have a file ID
-  useVssAlerts({
-    fileId: state.vssFileId,
-    enabled: state.useVssAnalysis && state.vssProcessingStatus === 'ready',
-    onNewEvent: addVssEvent,
+  // Track if we've already analyzed this file
+  const analyzedFileRef = useRef<string | null>(null);
+
+  // VSS detection analysis (for uploaded videos)
+  const { analyzeVideo, isAnalyzing } = useVssDetections({
+    onNewEvent: (event) => {
+      addVssEvent(event);
+      // Show toast for critical events
+      if (event.severity === 'critical') {
+        toast.error(`🚨 ${event.type.toUpperCase()}: ${event.message}`, {
+          duration: 5000,
+        });
+      }
+    },
+    onSummary: (summary) => {
+      setVssSummary(summary);
+      toast.success('AI analysis complete - tactical summary ready', {
+        duration: 3000,
+      });
+    },
   });
+
+  // Trigger VLM analysis when video processing is ready
+  useEffect(() => {
+    if (
+      state.vssProcessingStatus === 'ready' &&
+      state.vssFileId &&
+      state.useVssAnalysis &&
+      analyzedFileRef.current !== state.vssFileId
+    ) {
+      analyzedFileRef.current = state.vssFileId;
+      console.log('Triggering VLM analysis for file:', state.vssFileId);
+      toast.info('Starting AI analysis...', { duration: 2000 });
+      analyzeVideo(state.vssFileId);
+    }
+  }, [state.vssProcessingStatus, state.vssFileId, state.useVssAnalysis, analyzeVideo]);
+
+  // Reset analyzed file ref when mission resets
+  useEffect(() => {
+    if (!state.vssFileId) {
+      analyzedFileRef.current = null;
+    }
+  }, [state.vssFileId]);
 
   const stats = getStats();
 
@@ -70,6 +110,7 @@ const Index = () => {
               vssProcessingStatus={state.vssProcessingStatus}
               vssError={state.vssError}
               vssFileId={state.vssFileId}
+              isAnalyzing={isAnalyzing}
             />
           </div>
         );
@@ -104,6 +145,7 @@ const Index = () => {
                   vssProcessingStatus={state.vssProcessingStatus}
                   vssError={state.vssError}
                   vssFileId={state.vssFileId}
+                  isAnalyzing={isAnalyzing}
                 />
               </div>
               <div className="flex-1 min-h-[250px]">
