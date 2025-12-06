@@ -1,4 +1,6 @@
-version: '3.8'
+######################################################################################################
+# SAR Dashboard Frontend - Integrates with NVIDIA VSS Backend
+######################################################################################################
 
 services:
   sar-dashboard:
@@ -7,9 +9,25 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_MAPBOX_ACCESS_TOKEN=${VITE_MAPBOX_ACCESS_TOKEN}
-        - VITE_VSS_API_URL=${VITE_VSS_API_URL}
+        - VITE_VSS_API_URL=${VITE_VSS_API_URL:-http://via-server:${BACKEND_PORT:-8000}}
     ports:
-      - "3000:80"
+      - "${SAR_DASHBOARD_PORT:-3000}:80"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+    depends_on:
+      via-server:
+        condition: service_started
+    networks:
+      - vss-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  vss-network:
+    external: true

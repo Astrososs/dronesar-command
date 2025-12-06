@@ -26,14 +26,26 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
+# Install envsubst for environment variable substitution
+RUN apk add --no-cache gettext
+
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx template and entrypoint
+COPY nginx.template.conf /etc/nginx/conf.d/default.conf.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Set default backend port
+ENV BACKEND_PORT=8000
 
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
+# Start with entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]
