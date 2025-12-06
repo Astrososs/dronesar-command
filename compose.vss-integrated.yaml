@@ -17,9 +17,10 @@
 
 services:
   # SAR Dashboard Frontend
+  # Set SAR_DASHBOARD_DIR to the path of the SAR dashboard source code
   sar-dashboard:
     build:
-      context: ./sar-dashboard
+      context: ${SAR_DASHBOARD_DIR:-.}
       dockerfile: Dockerfile
       args:
         - VITE_MAPBOX_ACCESS_TOKEN=${VITE_MAPBOX_ACCESS_TOKEN}
