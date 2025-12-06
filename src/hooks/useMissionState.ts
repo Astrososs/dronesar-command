@@ -90,30 +90,68 @@ export const useMissionState = () => {
     }
   }, [state.currentAlert]);
 
-  // Poll for VSS processing status
+  // Poll for VSS processing status with timeout
+  const pollCountRef = useRef<number>(0);
+  const MAX_POLL_ATTEMPTS = 60; // 3 minutes max (60 * 3 seconds)
+
   const pollProcessingStatus = useCallback(async (fileId: string) => {
+    pollCountRef.current += 1;
+    
+    // Timeout after max attempts
+    if (pollCountRef.current >= MAX_POLL_ATTEMPTS) {
+      console.error('VSS processing timeout after', MAX_POLL_ATTEMPTS, 'attempts');
+      setState(prev => ({ 
+        ...prev, 
+        vssProcessingStatus: 'error',
+        vssError: 'Processing timeout - VSS backend may be unavailable'
+      }));
+      if (processingPollRef.current) {
+        clearInterval(processingPollRef.current);
+        processingPollRef.current = null;
+      }
+      return;
+    }
+
     try {
       const fileInfo = await getFileInfo(fileId);
+      console.log('VSS file status:', fileInfo.status, '- attempt', pollCountRef.current);
       
-      if (fileInfo.status === 'completed') {
-        setState(prev => ({ ...prev, vssProcessingStatus: 'ready' }));
+      if (fileInfo.status === 'completed' || fileInfo.status === 'ready') {
+        setState(prev => ({ ...prev, vssProcessingStatus: 'ready', vssError: null }));
         if (processingPollRef.current) {
           clearInterval(processingPollRef.current);
           processingPollRef.current = null;
         }
-      } else if (fileInfo.status === 'failed') {
+        pollCountRef.current = 0;
+      } else if (fileInfo.status === 'failed' || fileInfo.status === 'error') {
         setState(prev => ({ 
           ...prev, 
           vssProcessingStatus: 'error',
-          vssError: 'Video processing failed'
+          vssError: fileInfo.error || 'Video processing failed'
         }));
         if (processingPollRef.current) {
           clearInterval(processingPollRef.current);
           processingPollRef.current = null;
         }
+        pollCountRef.current = 0;
       }
+      // else still processing, continue polling
     } catch (error) {
       console.error('Failed to check processing status:', error);
+      // Don't immediately fail - VSS might be temporarily unavailable
+      // After several failures, show error
+      if (pollCountRef.current >= 5) {
+        setState(prev => ({ 
+          ...prev, 
+          vssProcessingStatus: 'error',
+          vssError: error instanceof Error ? error.message : 'Cannot reach VSS backend'
+        }));
+        if (processingPollRef.current) {
+          clearInterval(processingPollRef.current);
+          processingPollRef.current = null;
+        }
+        pollCountRef.current = 0;
+      }
     }
   }, []);
 
@@ -140,12 +178,18 @@ export const useMissionState = () => {
     // Upload to VSS if analysis is enabled
     if (state.useVssAnalysis) {
       try {
+        console.log('Uploading video to VSS...');
         const response = await vssUploadVideo(file);
+        console.log('VSS upload success, file ID:', response.id);
+        
+        // Reset poll counter
+        pollCountRef.current = 0;
         
         setState(prev => ({
           ...prev,
           vssFileId: response.id,
           vssProcessingStatus: 'processing',
+          vssError: null,
         }));
 
         // Start polling for processing status
@@ -155,10 +199,20 @@ export const useMissionState = () => {
 
       } catch (error) {
         console.error('VSS upload failed:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        
+        // Check for specific error types
+        let userFriendlyError = errorMessage;
+        if (errorMessage.includes('405')) {
+          userFriendlyError = 'VSS backend not reachable (405 - check NGINX proxy config)';
+        } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+          userFriendlyError = 'Cannot connect to VSS backend - check if via-server is running';
+        }
+        
         setState(prev => ({
           ...prev,
           vssProcessingStatus: 'error',
-          vssError: error instanceof Error ? error.message : 'Upload failed',
+          vssError: userFriendlyError,
         }));
       }
     }
