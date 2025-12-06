@@ -52,8 +52,24 @@ export interface VssChatMessage {
 
 export interface VssChatRequest {
   messages: VssChatMessage[];
-  file_id?: string;
+  id?: string;  // VSS uses 'id' not 'file_id'
+  model?: string;
   stream?: boolean;
+  max_tokens?: number;
+  temperature?: number;
+}
+
+export interface VssVlmCaptionRequest {
+  id: string;
+  prompt?: string;
+}
+
+export interface VssVlmCaptionResponse {
+  captions: {
+    timestamp: number;
+    caption: string;
+    detections?: string[];
+  }[];
 }
 
 export interface VssChatResponse {

@@ -8,7 +8,9 @@ import type {
   VssChatRequest,
   VssChatResponse,
   VssSummaryRequest,
-  VssSummaryResponse
+  VssSummaryResponse,
+  VssVlmCaptionRequest,
+  VssVlmCaptionResponse
 } from '@/types/vss';
 
 // Get API base URL from environment or default to /api for nginx proxy
@@ -133,7 +135,14 @@ export const sendChatMessage = async (request: VssChatRequest): Promise<VssChatR
   const response = await fetch(`${getApiBaseUrl()}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      id: request.id,
+      messages: request.messages,
+      model: request.model || 'cosmos-reason1',
+      stream: request.stream || false,
+      max_tokens: request.max_tokens || 2048,
+      temperature: request.temperature || 0.2,
+    }),
   });
 
   if (!response.ok) {
@@ -153,7 +162,14 @@ export const streamChatMessage = async (
   const response = await fetch(`${getApiBaseUrl()}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...request, stream: true }),
+    body: JSON.stringify({
+      id: request.id,
+      messages: request.messages,
+      model: request.model || 'cosmos-reason1',
+      stream: true,
+      max_tokens: request.max_tokens || 2048,
+      temperature: request.temperature || 0.2,
+    }),
   });
 
   if (!response.ok || !response.body) {
@@ -190,6 +206,25 @@ export const streamChatMessage = async (
     }
   }
   onComplete();
+};
+
+// VLM Caption Generation for SAR detections
+export const generateVlmCaptions = async (request: VssVlmCaptionRequest): Promise<VssVlmCaptionResponse> => {
+  const response = await fetch(`${getApiBaseUrl()}/generate_vlm_captions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: request.id,
+      prompt: request.prompt || "Identify all people, fires, smoke, vehicles, debris, and potential hazards. Note their locations and any rescue-relevant details.",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`VLM caption generation failed: ${error}`);
+  }
+
+  return response.json();
 };
 
 // Summarization
