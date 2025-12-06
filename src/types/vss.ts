@@ -11,7 +11,8 @@ export interface VssFile {
   purpose: string;
   media_type: string;
   created_at: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'ready' | 'failed' | 'error';
+  error?: string;
 }
 
 export interface VssUploadResponse {
