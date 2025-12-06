@@ -68,7 +68,7 @@ export const ChatPanel = ({ fileId, className }: ChatPanelProps) => {
         await streamChatMessage(
           {
             messages: messages.map(m => ({ role: m.role, content: m.content })).concat({ role: 'user', content }),
-            file_id: fileId,
+            id: fileId,
             stream: true,
           },
           (chunk) => {
@@ -91,7 +91,7 @@ export const ChatPanel = ({ fileId, className }: ChatPanelProps) => {
         // Non-streaming mode
         const response = await sendChatMessage({
           messages: messages.map(m => ({ role: m.role, content: m.content })).concat({ role: 'user', content }),
-          file_id: fileId,
+          id: fileId,
         });
 
         const assistantMessage: ChatMessage = {
