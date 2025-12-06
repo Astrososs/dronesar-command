@@ -110,7 +110,7 @@ export const VideoFeedPanel = ({
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center cyber-grid">
-            <div className="relative z-10 flex flex-col items-center gap-4 p-8">
+            <div className="relative z-10 flex flex-col items-center gap-4 p-8 mt-8">
               <div className="w-20 h-20 rounded-full border-2 border-dashed border-primary/40 flex items-center justify-center pulse-glow">
                 <Upload className="w-8 h-8 text-primary/60" />
               </div>
