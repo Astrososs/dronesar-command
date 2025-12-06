@@ -1,4 +1,4 @@
-import { Map, Video, FileText, LayoutGrid } from 'lucide-react';
+import { Map, Video, FileText, LayoutGrid, MessageSquare } from 'lucide-react';
 import { ViewMode } from '@/hooks/useMissionState';
 
 interface ViewSwitcherProps {
@@ -12,6 +12,7 @@ export const ViewSwitcher = ({ currentView, onViewChange }: ViewSwitcherProps) =
     { mode: 'map', label: 'Map', icon: <Map className="w-4 h-4" /> },
     { mode: 'video', label: 'Video', icon: <Video className="w-4 h-4" /> },
     { mode: 'log', label: 'Log', icon: <FileText className="w-4 h-4" /> },
+    { mode: 'chat', label: 'AI Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   return (
