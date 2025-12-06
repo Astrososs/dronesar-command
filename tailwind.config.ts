@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         mono: ["Share Tech Mono", "monospace"],
-        display: ["Orbitron", "sans-serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
