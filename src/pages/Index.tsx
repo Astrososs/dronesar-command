@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
-import { Heart, Shield } from 'lucide-react';
+import { Heart, Shield, Brain } from 'lucide-react';
 import { useMissionState } from '@/hooks/useMissionState';
+import { useVssAlerts } from '@/hooks/useVssAlerts';
 import { VideoFeedPanel } from '@/components/VideoFeedPanel';
 import { TacticalMap } from '@/components/TacticalMap';
 import { MissionLog } from '@/components/MissionLog';
@@ -8,6 +9,10 @@ import { StatsBar } from '@/components/StatsBar';
 import { AlertBanner } from '@/components/AlertBanner';
 import { QuickActions } from '@/components/QuickActions';
 import { ViewSwitcher } from '@/components/ViewSwitcher';
+import { VssStatus } from '@/components/VssStatus';
+import { ChatPanel } from '@/components/ChatPanel';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const Index = () => {
   const {
@@ -22,7 +27,16 @@ const Index = () => {
     resetMission,
     dismissAlert,
     getStats,
+    toggleVssAnalysis,
+    addVssEvent,
   } = useMissionState();
+
+  // Connect VSS alerts when we have a file ID
+  useVssAlerts({
+    fileId: state.vssFileId,
+    enabled: state.useVssAnalysis && state.vssProcessingStatus === 'ready',
+    onNewEvent: addVssEvent,
+  });
 
   const stats = getStats();
 
@@ -53,6 +67,9 @@ const Index = () => {
               onDurationChange={handleDurationChange}
               onPlayPause={handlePlayPause}
               setVideoRef={setVideoRef}
+              vssProcessingStatus={state.vssProcessingStatus}
+              vssError={state.vssError}
+              vssFileId={state.vssFileId}
             />
           </div>
         );
@@ -60,6 +77,12 @@ const Index = () => {
         return (
           <div className="h-full">
             <MissionLog events={state.triggeredEvents} />
+          </div>
+        );
+      case 'chat':
+        return (
+          <div className="h-full">
+            <ChatPanel fileId={state.vssFileId} />
           </div>
         );
       default:
@@ -78,6 +101,9 @@ const Index = () => {
                   onDurationChange={handleDurationChange}
                   onPlayPause={handlePlayPause}
                   setVideoRef={setVideoRef}
+                  vssProcessingStatus={state.vssProcessingStatus}
+                  vssError={state.vssError}
+                  vssFileId={state.vssFileId}
                 />
               </div>
               <div className="flex-1 min-h-[250px]">
@@ -91,9 +117,16 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Column - Mission Log */}
-            <div className="lg:col-span-1 min-h-[400px] lg:min-h-0">
-              <MissionLog events={state.triggeredEvents} />
+            {/* Right Column - Mission Log & Chat */}
+            <div className="lg:col-span-1 flex flex-col gap-3 min-h-[400px] lg:min-h-0">
+              <div className="flex-1 min-h-[200px]">
+                <MissionLog events={state.triggeredEvents} />
+              </div>
+              {state.vssFileId && (
+                <div className="flex-1 min-h-[200px]">
+                  <ChatPanel fileId={state.vssFileId} />
+                </div>
+              )}
             </div>
           </div>
         );
@@ -128,6 +161,23 @@ const Index = () => {
                     Emergency Response Center
                   </p>
                 </div>
+              </div>
+
+              {/* VSS Status & Toggle */}
+              <div className="flex items-center gap-3">
+                <VssStatus />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'h-7 px-2 text-xs gap-1.5',
+                    state.useVssAnalysis && 'text-primary'
+                  )}
+                  onClick={toggleVssAnalysis}
+                >
+                  <Brain className="w-3.5 h-3.5" />
+                  AI {state.useVssAnalysis ? 'ON' : 'OFF'}
+                </Button>
               </div>
 
               <StatsBar stats={stats} />

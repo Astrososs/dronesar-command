@@ -1,12 +1,22 @@
-import { Wifi, Battery, MapPin, Mountain, Clock, Circle } from 'lucide-react';
+import { Wifi, Battery, MapPin, Mountain, Clock, Circle, Brain, Cpu } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HUDProps {
   isPlaying: boolean;
   currentTime: number;
   dronePosition: [number, number];
+  // VSS integration
+  vssConnected?: boolean;
+  vssFileId?: string | null;
 }
 
-export const HUD = ({ isPlaying, currentTime, dronePosition }: HUDProps) => {
+export const HUD = ({ 
+  isPlaying, 
+  currentTime, 
+  dronePosition,
+  vssConnected = false,
+  vssFileId,
+}: HUDProps) => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -38,28 +48,59 @@ export const HUD = ({ isPlaying, currentTime, dronePosition }: HUDProps) => {
 
       {/* Top left - AI Status */}
       <div className="absolute top-6 left-6 flex flex-col gap-1">
+        {/* VSS AI Status */}
         <div className="hud-element flex items-center gap-2">
-          <Circle className={`w-2 h-2 ${isPlaying ? 'fill-primary text-primary' : 'fill-warning text-warning'}`} />
-          <span className="text-primary text-glow-primary">AI: {isPlaying ? 'ACTIVE' : 'STANDBY'}</span>
+          <Brain className={cn(
+            'w-3 h-3',
+            vssConnected ? 'text-success' : 'text-warning'
+          )} />
+          <span className={cn(
+            vssConnected ? 'text-success' : 'text-warning',
+            'text-glow-primary'
+          )}>
+            VSS: {vssConnected ? 'ACTIVE' : 'STANDBY'}
+          </span>
         </div>
+        
+        {/* Local AI Status */}
+        <div className="hud-element flex items-center gap-2">
+          <Circle className={cn(
+            'w-2 h-2',
+            isPlaying ? 'fill-primary text-primary' : 'fill-warning text-warning'
+          )} />
+          <span className="text-primary text-glow-primary">
+            AI: {isPlaying ? 'ANALYZING' : 'IDLE'}
+          </span>
+        </div>
+        
         <div className="hud-element flex items-center gap-2">
           <Wifi className="w-3 h-3 text-primary" />
           <span className="text-primary">{signalStrength}%</span>
         </div>
       </div>
 
-      {/* Top right - Battery & Recording */}
+      {/* Top right - Battery, Recording & Model */}
       <div className="absolute top-6 right-6 flex flex-col gap-1 items-end">
         <div className="hud-element flex items-center gap-2">
           <Battery className="w-3 h-3 text-primary" />
           <span className="text-primary">{batteryLevel}%</span>
         </div>
         <div className="hud-element flex items-center gap-2">
-          <Circle className={`w-2 h-2 ${isPlaying ? 'fill-destructive text-destructive blink' : 'fill-muted text-muted-foreground'}`} />
+          <Circle className={cn(
+            'w-2 h-2',
+            isPlaying ? 'fill-destructive text-destructive blink' : 'fill-muted text-muted-foreground'
+          )} />
           <span className={isPlaying ? 'text-destructive' : 'text-muted-foreground'}>
             {isPlaying ? 'REC' : 'STOP'}
           </span>
         </div>
+        {/* Model indicator */}
+        {vssConnected && (
+          <div className="hud-element flex items-center gap-2">
+            <Cpu className="w-3 h-3 text-accent" />
+            <span className="text-accent text-xs">VILA-1.5</span>
+          </div>
+        )}
       </div>
 
       {/* Bottom left - GPS */}
@@ -74,6 +115,14 @@ export const HUD = ({ isPlaying, currentTime, dronePosition }: HUDProps) => {
           <Mountain className="w-3 h-3 text-accent" />
           <span className="text-accent">ALT: {altitude.toFixed(1)}m</span>
         </div>
+        {/* File ID indicator */}
+        {vssFileId && (
+          <div className="hud-element flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-mono">
+              ID: {vssFileId.slice(0, 8)}...
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Bottom right - Time */}

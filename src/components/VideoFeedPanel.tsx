@@ -1,8 +1,10 @@
 import { useRef, useCallback } from 'react';
-import { Upload, Play, Pause, Video } from 'lucide-react';
+import { Upload, Play, Pause, Video, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HUD } from './HUD';
 import { getDronePosition } from '@/data/flightPath';
+import type { VssProcessingStatus } from '@/hooks/useMissionState';
+import { cn } from '@/lib/utils';
 
 interface VideoFeedPanelProps {
   videoUrl: string | null;
@@ -14,7 +16,46 @@ interface VideoFeedPanelProps {
   onDurationChange: (duration: number) => void;
   onPlayPause: (playing: boolean) => void;
   setVideoRef: (ref: HTMLVideoElement | null) => void;
+  // VSS integration props
+  vssProcessingStatus?: VssProcessingStatus;
+  vssError?: string | null;
+  vssFileId?: string | null;
 }
+
+const ProcessingStatusBadge = ({ 
+  status, 
+  error 
+}: { 
+  status: VssProcessingStatus; 
+  error?: string | null;
+}) => {
+  const getStatusConfig = () => {
+    switch (status) {
+      case 'uploading':
+        return { icon: Loader2, text: 'Uploading to VSS...', className: 'text-warning', animate: true };
+      case 'processing':
+        return { icon: Loader2, text: 'AI Processing...', className: 'text-primary', animate: true };
+      case 'ready':
+        return { icon: CheckCircle2, text: 'AI Ready', className: 'text-success', animate: false };
+      case 'error':
+        return { icon: AlertCircle, text: error || 'Processing Error', className: 'text-destructive', animate: false };
+      default:
+        return null;
+    }
+  };
+
+  const config = getStatusConfig();
+  if (!config) return null;
+
+  const Icon = config.icon;
+
+  return (
+    <div className={cn('flex items-center gap-1.5 text-xs', config.className)}>
+      <Icon className={cn('w-3 h-3', config.animate && 'animate-spin')} />
+      <span>{config.text}</span>
+    </div>
+  );
+};
 
 export const VideoFeedPanel = ({
   videoUrl,
@@ -25,7 +66,10 @@ export const VideoFeedPanel = ({
   onTimeUpdate,
   onDurationChange,
   onPlayPause,
-  setVideoRef
+  setVideoRef,
+  vssProcessingStatus = 'idle',
+  vssError,
+  vssFileId,
 }: VideoFeedPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -62,7 +106,12 @@ export const VideoFeedPanel = ({
           <Video className="w-4 h-4 text-primary" />
           <span className="panel-title">Live Feed</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* VSS Processing Status */}
+          {vssProcessingStatus !== 'idle' && (
+            <ProcessingStatusBadge status={vssProcessingStatus} error={vssError} />
+          )}
+          
           {videoUrl && (
             <Button
               variant="ghost"
@@ -92,7 +141,13 @@ export const VideoFeedPanel = ({
               onPause={() => onPlayPause(false)}
               onEnded={() => onPlayPause(false)}
             />
-            <HUD isPlaying={isPlaying} currentTime={currentTime} dronePosition={dronePosition} />
+            <HUD 
+              isPlaying={isPlaying} 
+              currentTime={currentTime} 
+              dronePosition={dronePosition}
+              vssConnected={vssProcessingStatus === 'ready'}
+              vssFileId={vssFileId}
+            />
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center cyber-grid">
@@ -111,7 +166,7 @@ export const VideoFeedPanel = ({
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
                 <Video className="w-4 h-4" />
-                <span>Supports MP4, MOV, WebM</span>
+                <span>Supports MP4, MOV, WebM • AI Analysis Enabled</span>
               </div>
               <input
                 ref={fileInputRef}
