@@ -109,20 +109,20 @@ export const VideoFeedPanel = ({
             />
           </>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center cyber-grid">
-            <div className="relative z-10 flex flex-col items-center gap-4 p-8 mt-8">
-              <div className="w-20 h-20 rounded-full border-2 border-dashed border-primary/40 flex items-center justify-center pulse-glow">
-                <Upload className="w-8 h-8 text-primary/60" />
+          <div className="absolute inset-0 flex items-center justify-center cyber-grid">
+            <div className="relative z-10 flex flex-col items-center gap-5 p-10 bg-card/50 rounded-lg border border-border shadow-sm">
+              <div className="w-16 h-16 rounded-full border-2 border-dashed border-primary/50 flex items-center justify-center">
+                <Upload className="w-7 h-7 text-primary/70" />
               </div>
               <div className="text-center">
-                <p className="text-sm text-foreground mb-1">No video feed detected</p>
-                <p className="text-xs text-muted-foreground mb-4">
+                <p className="text-base font-medium text-foreground mb-1">No video feed detected</p>
+                <p className="text-sm text-muted-foreground">
                   Upload drone footage to begin mission analysis
                 </p>
               </div>
               <Button
                 variant="outline"
-                className="border-primary/40 text-primary hover:bg-primary/20 hover:text-primary hover:border-primary"
+                className="mt-2 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary hover:border-primary"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="w-4 h-4 mr-2" />
